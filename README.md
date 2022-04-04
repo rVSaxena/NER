@@ -4,4 +4,4 @@ The task, in its entirety, involves selecting a sub-label amongst an hierarchy o
 
 The dataset: Publicly available GMB dataset, see https://gmb.let.rug.nl/data.php
 <br>
-More about the NER task can be read [here][https://aclanthology.org/N16-1030/]
+More about the NER task can be read [here](https://aclanthology.org/N16-1030/)
