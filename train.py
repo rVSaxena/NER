@@ -7,15 +7,15 @@ import numpy as np
 from tqdm import tqdm
 from os.path import join as pathjoin
 from torch import nn
-from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from torch.nn import CrossEntropyLoss
 from constructs import args
 from ner_model import NER_Model
 from os import makedirs
 
-def loss_func(batch_first=False):
+def loss_func(target_pad_value, max_seq_len, num_classes, batch_first=False):
 
-    lf=CrossEntropyLoss()
+    lf=CrossEntropyLoss(ignore_index=target_pad_value)
 
     def f(ner_pred, ner_target):
         """
@@ -24,13 +24,14 @@ def loss_func(batch_first=False):
         ner_target: Is a padded tensor of shape (max_seq_len, N) if not batch_first, else (N, max_seq_len) if batch_first
         """
 
-        ner_target=pack_padded_sequence(ner_target, ner_pred.batch_sizes, batch_first=batch_first, enforce_sorted=False)
+        ner_pred=pad_packed_sequence(ner_pred, batch_first=batch_first, total_length=max_seq_len)[0].reshape((-1, num_classes))
+        ner_target=ner_target.reshape((-1))
         return lf(ner_pred, ner_target)
 
     return f
 
 batch_first=args["batch_first"]
-loss=loss_func(batch_first)
+loss=loss_func(args["target_pad_value"], args["max_seq_len"], args["num_classes"], batch_first)
 
 device=args["device"]
 trainLoader=args["trainLoader"] # a torch.utils.data.DataLoader object
@@ -67,19 +68,17 @@ if __name__=='__main__':
         
             for batch_x, batch_seq_lens, batch_labels  in t:
 
-                for opts in optimizers:
-                    opts.zero_grad()
+                optimizer.zero_grad()
 
-                batch_x, batch_seq_lens, batch_labels=batch_x.to(device), batch_seq_lens.to(device), batch_labels.to(device)
+                batch_x, batch_seq_lens, batch_labels=batch_x.to(device), batch_seq_lens.to(torch.int64).to('cpu'), batch_labels.type(torch.LongTensor).to(device)
                 ner_pred=model(batch_x, batch_seq_lens, batch_first)
                 batch_loss=loss(ner_pred, batch_labels)
                 batch_loss.backward()
                 lossarr.append(batch_loss.item())
                 
-                for opts in optimizers:
-                    opts.step()
+                optimizer.step()
 
-                t.set_postfix(elbo_loss=batch_loss.item())
+                t.set_postfix(cross_entropy_loss=batch_loss.item())
 
             for schs in lr_schedulers:
                 schs.step()
