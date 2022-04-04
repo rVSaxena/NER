@@ -1,5 +1,4 @@
 *.ipynb*
-extracted_data/*
 glove/*
 *.csv*
 
