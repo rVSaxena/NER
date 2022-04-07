@@ -14,15 +14,6 @@ from numpy.random import uniform
 from os import makedirs
 from os.path import join as pathjoin
 
-train_datafiles=["extracted_data/dev.txt", "extracted_data/train.txt"]
-test_datafiles=["extracted_data/test.txt"]
-trainx="run2Data/train_x.csv"
-trainy="run2Data/train_labels.csv"
-testx="run2Data/test_x.csv"
-testy="run2Data/test_labels.csv"
-replace_with_unk_prob=0.0001
-
-# @jit
 
 def treat(
 	datafiles,
@@ -96,6 +87,7 @@ def treat(
 	print("The maximum sequence lenght is: {}".format(maxlen))
 	return
 
+
 def transform(
 	datafiles,
 	vocab_to_idx,
@@ -150,6 +142,25 @@ def transform(
 	return
 
 
+def load_vocab(vocab_file):
 
-makedirs("run2Data", exist_ok=True)
-treat(datafiles)
+
+def load_label_map(label_map_file):
+
+
+train_datafiles=["extracted_data/dev.txt", "extracted_data/train.txt"]
+test_datafiles=["extracted_data/test.txt"]
+outdir="run2Data"
+replace_with_unk_prob=0.0001
+
+makedirs(outdir, exist_ok=True)
+
+vocab_to_idx=load_vocab(pathjoin(outdir, "vocab_map.csv"))
+label_to_idx=load_label_map(pathjoin(outdir, "label_map.csv"))
+
+transform(
+	test_datafiles,
+	vocab_to_idx,
+	label_to_idx,
+	outdir
+	)
