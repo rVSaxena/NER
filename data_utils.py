@@ -144,8 +144,28 @@ def transform(
 
 def load_vocab(vocab_file):
 
+	vocab_to_idx={}
+
+	df=pd.read_csv(vocab_file)
+	
+	for i in range(df.shape[0]):
+		idx, word=df.iloc[i]
+		vocab_to_idx[word]=idx
+
+	return vocab_to_idx
+
 
 def load_label_map(label_map_file):
+
+	label_to_idx={}
+
+	df=pd.read_csv(label_map_file)
+
+	for i in range(df.shape[0]):
+		idx, label=df.iloc[i]
+		label_to_idx[label]=idx
+
+	return label_to_idx
 
 
 train_datafiles=["extracted_data/dev.txt", "extracted_data/train.txt"]
