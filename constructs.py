@@ -31,7 +31,7 @@ class LangModel(nn.Module):
             bidirectional=True,
             batch_first=self.batch_first,
             dropout=0.3,
-            num_layers=3
+            num_layers=5
             )
         self.use_softmax=use_softmax
         if self.use_softmax:
@@ -88,11 +88,11 @@ class ner_dataset(torch.utils.data.Dataset):
 
 args={}
 
-args["logging_dir"]="./NER_run2"
+args["logging_dir"]="./NER_run3"
 args["target_pad_value"]=100
-args["epochs"]=30
+args["epochs"]=60
 args["optimizer"]=lambda model: torch.optim.Adam(model.parameters(), lr=1e-3)
-args["lr_schedulers"]=[lambda opt: torch.optim.lr_scheduler.StepLR(opt, 9, gamma=0.8)]
+args["lr_schedulers"]=[lambda opt: torch.optim.lr_scheduler.StepLR(opt, 9, gamma=0.7)]
 args["batch_first"]=True
 args["device"]="cuda"
 args["embedding_dim"]=50
@@ -100,8 +100,8 @@ args["max_seq_len"]=104
 args["num_classes"]=17
 args["vocab_size"]=36039
 
-dataset=ner_dataset("run2Data/data.csv", "run2Data/labels.csv", args["vocab_size"], args["max_seq_len"])
-trainloader=torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
+dataset=ner_dataset("run2Data/train_x.csv", "run2Data/train_y.csv", args["vocab_size"], args["max_seq_len"])
+trainloader=torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True)
 
 lang_model=LangModel(args["embedding_dim"], args["num_classes"])
 
