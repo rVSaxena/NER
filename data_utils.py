@@ -18,7 +18,7 @@ from os.path import join as pathjoin
 def treat(
 	datafiles,
 	outdir,
-	unk="<UNK>"
+	unk="<UNK>",
 	replace_with_unk_prob=0.0001
 	):
 
@@ -137,6 +137,7 @@ def transform(
 							word=unk
 
 						curline.append(vocab_to_idx[word])
+						curlabels.append(label_to_idx[label])
 
 	print("The maximum sequence lenght is: {}".format(maxlen))
 	return
