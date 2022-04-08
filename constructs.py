@@ -88,7 +88,7 @@ class ner_dataset(torch.utils.data.Dataset):
 
 args={}
 
-args["logging_dir"]="./NER_run1"
+args["logging_dir"]="./NER_run2"
 args["target_pad_value"]=100
 args["epochs"]=30
 args["optimizer"]=lambda model: torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -98,12 +98,12 @@ args["device"]="cuda"
 args["embedding_dim"]=50
 args["max_seq_len"]=104
 args["num_classes"]=17
+args["vocab_size"]=36039
 
-dataset=ner_dataset("finData/data.csv", "finData/labels.csv", 36038, args["max_seq_len"])
+dataset=ner_dataset("run2Data/data.csv", "run2Data/labels.csv", args["vocab_size"], args["max_seq_len"])
 trainloader=torch.utils.data.DataLoader(dataset, batch_size=64, shuffle=True)
 
 lang_model=LangModel(args["embedding_dim"], args["num_classes"])
 
 args["trainLoader"]=trainloader
 args["lang_model"]=lang_model
-args["vocab_size"]=36038
