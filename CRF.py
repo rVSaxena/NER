@@ -27,11 +27,11 @@ class CRF(nn.Module):
 		Because decode is used for inference, and speed is not of the utmost importance,
 		the decoding algorithm is NOT parallelized over the sentences in a batch.
 
-		x: A packed padded sequence representing the following data:
+		x: A packed sequence representing the following data:
 		if batch_first==True:
-			x.data has shape batch_size x max_seq_len x num_classes
+			x.data has shape batch_size x max_seq_len x num_classes (when padded)
 		else:
-			x.data has shape max_seq_len x batch_size x num_classes
+			x.data has shape max_seq_len x batch_size x num_classes (when padded)
 
 		Returns:
 			A python list of tensors, where the ith element
@@ -44,3 +44,25 @@ class CRF(nn.Module):
 		if not self.batch_first:
 			pad_x=torch.swapaxes(pad_x, 0, 1)
 
+		return self._viterbi_decode(pad_x, batch_sizes)
+
+	def get_prob(self, x, y):
+		"""
+		x: a packed sequence representing the following data
+		if batch_first==True:
+			x.data has shape batch_size x max_seq_len x num_classes (when padded)
+		else:
+			x.data has shape max_seq_len x batch_size x num_classes (when padded)
+
+		y: A packed sequence with the following data
+		if batch_first==True:
+			y.data has shape batch_size x max_seq_len (when padded)
+		else:
+			y.data has shape max_seq_len x batch_size (when padded)
+		y stores the integer class indices.
+
+		Return a tensor of shape (batch_size, ) where the ith element denotes the probability
+		of y[i] being the optimal sequence tagging for x[i]
+		"""
+
+		
