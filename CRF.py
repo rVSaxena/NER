@@ -103,10 +103,10 @@ class CRF(nn.Module):
         origination_val=self.origination_scores[transition_matrix[:, 0]] # has shape (N, )
         transition_val=torch.cat((origination_val.reshape((1, -1)), tmp_transition_val), 0) # has shape (N, max_seq_len), so sum by reducing on axis 1 to get the numerator
 
-        batch_scores=torch.exp(transition_val.sum(dim=1))
+        batch_scores=transition_val.sum(dim=1)
 
-        return torch.div(batch_scores, normalizer)
-    
+        return batch_scores-normalizer
+
     def _forward_algo(self, pad_x, batch_sizes):
 
         num_samples, max_seq_len, _=pad_x.shape
