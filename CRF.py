@@ -18,6 +18,8 @@ class CRF(nn.Module):
 
     def __init__(self, num_classes, batch_first, target_pad_val):
         
+        super(CRF, self).__init__()
+
         self.transition_scores=nn.parameter.Parameter(data=torch.rand(num_classes, num_classes))
         self.origination_scores=nn.parameter.Parameter(data=torch.rand(num_classes, ))
         self.target_pad_val=target_pad_val
