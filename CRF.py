@@ -16,8 +16,16 @@ class CRF(nn.Module):
     # Can be changed to use, but no use yet.
     
 
-    def __init__(self, num_classes, batch_first, target_pad_val):
+    def __init__(self, num_classes, batch_first, target_pad_val, device):
         
+        """
+        Parameters:
+            num_classes:
+            batch_first:
+            target__pad_val:
+            device: The device that any newly created tensors will reside on.
+        """
+
         super(CRF, self).__init__()
 
         self.transition_scores=nn.parameter.Parameter(data=torch.rand(num_classes, num_classes))
@@ -25,6 +33,7 @@ class CRF(nn.Module):
         self.target_pad_val=target_pad_val
         self.batch_first=batch_first
         self.num_classes=num_classes
+        self.device=device
 
         return
 
@@ -78,7 +87,7 @@ class CRF(nn.Module):
         if not self.batch_first:
             pad_x=torch.swapaxes(pad_x, 0, 1)
 
-        normalizer=self._forward_algo(pad_x, batch_sizes)
+        normalizer=self._forward_algo(pad_x, batch_sizes.to(self.device))
 
         pad_y, y_batch_sizes=pad_packed_sequence(y, batch_first=self.batch_first)
         if not self.batch_first:
@@ -92,7 +101,7 @@ class CRF(nn.Module):
         pad_y_mod=torch.clone(pad_y)
         pad_y_mod[pad_y==self.target_pad_val]=0
 
-        K=torch.zeros_like(pad_x)
+        K=torch.zeros_like(pad_x).to(self.device)
         torch.scatter(K, 2, pad_y_mod[:, :, None], 1)
         emission_val=torch.mul(pad_x, K).sum(dim=(1, 2)) # this has shape (N, )
 
@@ -102,17 +111,17 @@ class CRF(nn.Module):
         assert should_be_2==2, "Unexpected and undesirable wreckage"
 
         tmp_transition_val=self.transition_scores[transition_matrix.reshape((-1, 2))[:, 0], transition_matrix.reshape((-1, 2))[:, 1]].reshape((rows, cols))
-        origination_val=self.origination_scores[transition_matrix[:, 0]] # has shape (N, )
-        transition_val=torch.cat((origination_val.reshape((1, -1)), tmp_transition_val), 0) # has shape (N, max_seq_len), so sum by reducing on axis 1 to get the numerator
+        origination_val=self.origination_scores[pad_y_mod[:, 0]] # has shape (N, )
+        transition_val=torch.cat((origination_val.reshape((-1, 1)), tmp_transition_val), 1) # has shape (N, max_seq_len), so sum by reducing on axis 1 to get the numerator
 
         batch_scores=transition_val.sum(dim=1)
 
-        return batch_scores-normalizer
+        return (batch_scores-normalizer).sum()
 
     def _forward_algo(self, pad_x, batch_sizes):
 
         num_samples, max_seq_len, _=pad_x.shape
-        alpha=torch.zeros(max_seq_len, num_samples, self.num_classes)
+        alpha=torch.zeros(max_seq_len, num_samples, self.num_classes).to(self.device)
 
         alpha[0]=pad_x[:, 0, :]+self.origination_scores.reshape((1, -1)).expand(num_samples, -1)
 
@@ -138,7 +147,7 @@ class CRF(nn.Module):
         res=torch.gather(
             torch.swapaxes(alpha, 0, 1),
             1,
-            (batch_sizes-1).expand(num_samples, 1, self.num_classes)
+            (batch_sizes-1)[:, None, None].expand(num_samples, 1, self.num_classes)
             ).squeeze()
 
         # res has shape (N, M)
