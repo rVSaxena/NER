@@ -40,7 +40,7 @@ crf=CRF(
 
 crf.train()
 model.train()
-optimizer=args["optimizer"](model.parameters()+crf.parameters())
+optimizer=args["optimizer"](list(model.parameters())+list(crf.parameters()))
 lr_schedulers=[f(optimizer) for f in args["lr_schedulers"]]
 
 makedirs(pathjoin(args["logging_dir"], "models"), exist_ok=True)
