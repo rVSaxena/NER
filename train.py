@@ -50,7 +50,7 @@ else:
         ).to(device)
 
 model.train()
-optimizer=args["optimizer"](model)
+optimizer=args["optimizer"](list(model.parameters()))
 lr_schedulers=[f(optimizer) for f in args["lr_schedulers"]]
 
 makedirs(pathjoin(args["logging_dir"], "models"), exist_ok=True)
