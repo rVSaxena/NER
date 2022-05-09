@@ -35,7 +35,8 @@ else:
 crf=CRF(
     args["num_classes"],
     args["batch_first"],
-    args["target_pad_value"]
+    args["target_pad_value"],
+    device
     ).to(device)
 
 crf.train()
