@@ -88,10 +88,10 @@ class ner_dataset(torch.utils.data.Dataset):
 
 args={}
 
-args["logging_dir"]="./NER_run3"
+args["logging_dir"]="./NER_run4"
 args["target_pad_value"]=100
 args["epochs"]=60
-args["optimizer"]=lambda model: torch.optim.Adam(model.parameters(), lr=1e-3)
+args["optimizer"]=lambda param_list: torch.optim.Adam(param_list, lr=1e-3)
 args["lr_schedulers"]=[lambda opt: torch.optim.lr_scheduler.StepLR(opt, 9, gamma=0.7)]
 args["batch_first"]=True
 args["device"]="cuda"
