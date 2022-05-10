@@ -10,6 +10,8 @@ class CRF(nn.Module):
 
     Implementation relies on the X (or features) being padded with 0.
     Padding with other values will give un-tested and un-known results.
+
+    If unfamiliar, http://www.cs.columbia.edu/~mcollins/crf.pdf is a good resource.
     """
 
     # This implementation does not use an <end> tag.
@@ -60,7 +62,36 @@ class CRF(nn.Module):
         if not self.batch_first:
             pad_x=torch.swapaxes(pad_x, 0, 1)
 
-        return self._viterbi_decode(pad_x, batch_sizes)
+        return torch.tensor([self._viterbi_decode(pad_x[i, :batch_sizes[i], :]) for i in range(pad_x.shape[0])], dtype=torch.uint32) # assuming no more than 2^32-1 classes
+
+    def _viterbi_decode(self, x):
+
+        """
+        x: the feature vector of shape (seq_len x self.num_classes). Note how it is
+        not max_seq_len.
+        Returns the optimal y for this x. So, shape is (seq_len, )
+        """
+
+        seq_len, should_be_num_classes=x.shape
+        
+        assert should_be_num_classes==self.num_classes, "Unexpected and undesirable wreckage."
+        
+        dp=torch.zeros(seq_len, self.num_classes).to(self.device)
+        path=torch.zeros(seq_len, self.num_classes).to(self.device)
+
+        dp[0, :]=self.origination_scores+x[0, :]
+        path[0, :]=torch.arange(self.num_classes)
+        for i in range(seq_len):
+            dp[i, :]=x[i, :]+(self.transition_scores+dp[i-1, :].reshape((-1, 1))).max(axis=1)
+            path[i, :]=(self.transition_scores+dp[i-1, :].reshape((-1, 1))).argmax(axis=1)
+
+        res=torch.zeros(seq_len, ).to(self.device).to(torch.uint8)
+
+        res[-1]=dp[-1, :].max(axis=1)
+        for i in range(seq_len-2, -1, -1):
+            res[i]=path[i+1, res[i+1]]
+
+        return res
 
     def score_tag_sequence(self, x, y):
 
