@@ -21,12 +21,12 @@ trainLoader=args["trainLoader"] # a torch.utils.data.DataLoader object
 epochs=args["epochs"]
 
 if "embedding_dim" in args:
-    model=NER_Model(
+    ner_features_model=NER_Model(
         args["lang_model"],
         args["vocab_size"]
         ).to(device)
 else:
-    model=NER_Model(
+    ner_features_model=NER_Model(
         args["lang_model"],
         args["vocab_size"],
         args["embedding_dim"]
@@ -39,9 +39,9 @@ crf=CRF(
     device
     ).to(device)
 
-crf.train()
+model=nn.ModuleList([ner_features_model, crf])
 model.train()
-optimizer=args["optimizer"](list(model.parameters())+list(crf.parameters()))
+optimizer=args["optimizer"](list(model.parameters()))
 lr_schedulers=[f(optimizer) for f in args["lr_schedulers"]]
 
 makedirs(pathjoin(args["logging_dir"], "models"), exist_ok=True)
@@ -62,14 +62,14 @@ if __name__=='__main__':
                 optimizer.zero_grad()
 
                 batch_x, batch_seq_lens, batch_labels=batch_x.to(device), batch_seq_lens.to(torch.int64).to('cpu'), batch_labels.type(torch.LongTensor).to(device)
-                ner_pred=model(batch_x, batch_seq_lens, batch_first) # this is a packed sequence
+                ner_pred=model[0](batch_x, batch_seq_lens, batch_first) # this is a packed sequence
                 packed_labels=pack_padded_sequence(
                     batch_labels,
                     batch_seq_lens,
                     args["batch_first"],
                     enforce_sorted=False
                     )
-                batch_loss=-crf.score_tag_sequence(ner_pred, packed_labels)
+                batch_loss=-model[1].score_tag_sequence(ner_pred, packed_labels)
                 batch_loss.backward()
                 lossarr.append(batch_loss.item())
                 
