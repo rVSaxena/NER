@@ -7,6 +7,9 @@
 # 	input data
 # 	target data
 
+# Remember to add a header to the transformed data files. The size of the header should be equal to the maximum sequence lenght that is printed by this script.
+# This number can, obviously, be different for test and train files.
+
 import pandas as pd
 from pandas import DataFrame as df
 from numba import jit
@@ -22,7 +25,7 @@ def treat(
 	replace_with_unk_prob=0.0001
 	):
 
-	vocab_to_idx, idx_to_vocab, label_to_idx, idx_to_label={}
+	vocab_to_idx, idx_to_vocab, label_to_idx, idx_to_label={}, {}, {}, {}
 
 	maxlen=0
 	x_outfile=pathjoin(outdir, "train_x.csv")
@@ -175,6 +178,11 @@ outdir="run2Data"
 replace_with_unk_prob=0.0001
 
 makedirs(outdir, exist_ok=True)
+
+treat(
+	train_datafiles,
+	outdir
+	)
 
 vocab_to_idx=load_vocab(pathjoin(outdir, "vocab_map.csv"))
 label_to_idx=load_label_map(pathjoin(outdir, "label_map.csv"))
