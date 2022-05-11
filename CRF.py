@@ -62,7 +62,7 @@ class CRF(nn.Module):
         if not self.batch_first:
             pad_x=torch.swapaxes(pad_x, 0, 1)
 
-        return torch.tensor([self._viterbi_decode(pad_x[i, :batch_sizes[i], :]) for i in range(pad_x.shape[0])], dtype=torch.uint32) # assuming no more than 2^32-1 classes
+        return [self._viterbi_decode(pad_x[i, :batch_sizes[i], :]) for i in range(pad_x.shape[0])]
 
     def _viterbi_decode(self, x):
 
@@ -87,9 +87,9 @@ class CRF(nn.Module):
 
         res=torch.zeros(seq_len, ).to(self.device).to(torch.uint8)
 
-        res[-1]=dp[-1, :].max(axis=1)
+        res[-1]=dp[-1, :].argmax()
         for i in range(seq_len-2, -1, -1):
-            res[i]=path[i+1, res[i+1]]
+            res[i]=path[i+1, res[i+1].item()]
 
         return res
 
